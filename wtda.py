@@ -9,13 +9,17 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     # marimo
-
     import marimo as mo
+    return (mo,)
+
+
+@app.cell
+def _():
     import pandas as pd
 
     pd.set_option("display.max_columns", None)
     pd.set_option("display.max_rows", None)
-    return mo, pd
+    return (pd,)
 
 
 @app.cell
@@ -51,12 +55,12 @@ def _(data):
         "LanguageWantToWorkWith",
         "YearsCodePro",
         "DevType",
-        "Employment"
+        "Employment",
     ]
 
     devs_df = data[cols].copy()
 
-    #drop rows with missing country or main language info
+    # drop rows with missing country or main language info
     devs_df.dropna(subset=["Country", "LanguageHaveWorkedWith"], inplace=True)
 
     devs_df.head()
@@ -82,9 +86,10 @@ def _(X, devs_df):
         except:
             return None
 
+
     devs_df["YearsCodePro"] = devs_df["YearsCodePro"].apply(clean_experience)
 
-    #drop rows where experience could not be converted
+    # drop rows where experience could not be converted
     devs_df.dropna(subset=["YearsCodePro"], inplace=True)
 
     devs_df["YearsCodePro"].describe()
@@ -100,12 +105,38 @@ def _(devs_df, mo):
     country_filter = mo.ui.dropdown(
         options=country_list,
         label="Select Country",
-        value="Kenya" if "Kenya" in country_list else country_list[0]
+        value="Kenya" if "Kenya" in country_list else country_list[0],
     )
 
     # Show the widget
     country_filter
 
+    return (country_filter,)
+
+
+@app.cell
+def _(country_filter, devs_df):
+    # filter dataset based on dropdown selection
+    filtered_df = devs_df[devs_df["Country"]== country_filter.value]
+    filtered_df.head(10)
+    return
+
+
+@app.cell
+def _(devs_df, mo):
+    # language list
+    from itertools import chain
+
+    language_series = devs_df["LanguageHaveWorkedWith"].dropna().apply(lambda x: [lang.strip() for lang in x.split(";")])
+    all_languages = sorted(set(chain.from_iterable(language_series)))
+
+    language_filter = mo.ui.dropdown(
+        options=all_languages,
+        label="Filter by Language",
+        value="Python" if "Python" in all_languages else all_languages[0]
+    
+    )
+    language_filter
     return
 
 
